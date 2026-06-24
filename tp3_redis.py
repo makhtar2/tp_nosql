@@ -6,7 +6,7 @@ r = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 # PARTIE 1 — STRUCTURES DE BASE
 
-r.setex("session:abc123", 1800, '{"user_id":42}')
+r.set("session:abc123", '{"user_id":42}', ex=1800)
 r.hset("user:42", mapping={"nom": "Dupont", "email": "d@mail.fr", "ville": "Paris"})
 
 r.set("pageviews:accueil", 0)
@@ -33,7 +33,7 @@ def get_product(sku):
         return json.loads(cached)
     data = mongo_get(sku)
     if data:
-        r.setex(key, 300, json.dumps(data))
+        r.set(key, json.dumps(data), ex=300)
     return data
 
 def update_product(sku, data):

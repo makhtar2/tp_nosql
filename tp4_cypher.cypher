@@ -43,7 +43,7 @@ MATCH path = shortestPath((a:Personne {nom:"Alice"})-[:SUIT*..10]-(e:Personne {n
 RETURN path;
 
 MATCH (a:Personne)-[:SUIT]->(b:Personne)-[:SUIT]->(a)
-WHERE id(a) < id(b)
+WHERE elementId(a) < elementId(b)
 RETURN a.nom, b.nom;
 
 // PARTIE 3 — RECOMMANDATION

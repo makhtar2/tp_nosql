@@ -1,7 +1,27 @@
 use boutique;
 
-// --- INITIALISATION DU JEU DE DONNÉES (MOCK DATA) ---
+// --- DÉBUT SEED MONGODB ---
+
+// 1. Nettoyage
+print("Nettoyage des collections...");
+db.produits.drop();
 db.clients.drop();
+db.commandes.drop();
+
+// 2. Seeding Produits (TP1)
+print("Seeding de la collection 'produits'...");
+db.produits.insertMany([
+  { "sku": "PRD-001", "nom": "Casque Bluetooth", "categorie": "audio", "prix": 79.99, "stock": 120, "tags": ["sans-fil", "bluetooth"], "fournisseur": { "nom": "TechCorp", "pays": "FR" }, "avis": [] },
+  { "sku": "PRD-002", "nom": "Barre de son", "categorie": "audio", "prix": 59.99, "stock": 45, "tags": ["promo", "filaire"], "fournisseur": { "nom": "SoundPro", "pays": "FR" } },
+  { "sku": "PRD-003", "nom": "Casque premium", "categorie": "audio", "prix": 149.99, "stock": 0, "tags": ["sans-fil"], "fournisseur": { "nom": "AudioMax", "pays": "DE" } },
+  { "sku": "PRD-004", "nom": "Enceinte Bluetooth", "categorie": "audio", "prix": 45.00, "stock": 80, "tags": ["promo", "sans-fil"], "fournisseur": { "nom": "SoundPro", "pays": "FR" } },
+  { "sku": "PRD-005", "nom": "Ecouteurs filaires", "categorie": "audio", "prix": 15.00, "stock": 150, "tags": ["budget"], "fournisseur": { "nom": "LogiCorp", "pays": "FR" } },
+  { "sku": "PRD-006", "nom": "Smartphone X1", "categorie": "telephonie", "prix": 499.99, "stock": 25, "tags": ["haut-de-gamme"], "fournisseur": { "nom": "SmartPhonia", "pays": "CN" } },
+  { "sku": "PRD-007", "nom": "Chargeur Rapide", "categorie": "telephonie", "prix": 29.99, "stock": 200, "tags": ["promo", "accessoire"], "fournisseur": { "nom": "PowerUp", "pays": "FR" } }
+]);
+
+// 3. Seeding Clients (TP2)
+print("Seeding de la collection 'clients'...");
 db.clients.insertMany([
   { _id: ObjectId("60c72b2f9b1d8b2bad871101"), nom: "Martin", ville: "Lyon", segment: "premium", email: "martin@email.fr" },
   { _id: ObjectId("60c72b2f9b1d8b2bad871102"), nom: "Bernard", ville: "Paris", segment: "standard", email: "bernard@email.fr" },
@@ -10,7 +30,8 @@ db.clients.insertMany([
   { _id: ObjectId("60c72b2f9b1d8b2bad871105"), nom: "Durand", ville: "Paris", segment: "premium", email: "durand@email.fr" }
 ]);
 
-db.commandes.drop();
+// 4. Seeding Commandes (TP2)
+print("Seeding de la collection 'commandes'...");
 db.commandes.insertMany([
   {
     _id: ObjectId("60c72b2f9b1d8b2bad872201"),
@@ -76,67 +97,4 @@ db.commandes.insertMany([
   }
 ]);
 
-// PARTIE 1 — PIPELINES D'AGRÉGATION
-
-db.commandes.aggregate([
-  { $match: { statut: "livree" } },
-  { $group: { _id: null, totalCA: { $sum: "$montant_total" } } }
-]);
-
-db.commandes.aggregate([
-  { $match: { statut: "livree" } },
-  { $lookup: { from: "clients", localField: "client_id", foreignField: "_id", as: "info" } },
-  { $unwind: "$info" },
-  { $group: { _id: "$info.segment", ca: { $sum: "$montant_total" } } }
-]);
-
-db.commandes.aggregate([
-  { $match: { statut: "livree" } },
-  { $group: { _id: "$client_id", total: { $sum: "$montant_total" } } },
-  { $sort: { total: -1 } },
-  { $limit: 3 }
-]);
-
-db.commandes.aggregate([
-  { $group: { _id: { annee: { $year: "$date" }, mois: { $month: "$date" } }, nb: { $sum: 1 } } },
-  { $sort: { "_id.annee": 1, "_id.mois": 1 } }
-]);
-
-db.commandes.aggregate([
-  { $lookup: { from: "clients", localField: "client_id", foreignField: "_id", as: "info" } },
-  { $unwind: "$info" },
-  { $group: { _id: "$info.ville", panier: { $avg: "$montant_total" } } }
-]);
-
-db.commandes.aggregate([
-  { $unwind: "$lignes" },
-  { $group: { _id: "$lignes.sku", qte_totale: { $sum: "$lignes.qte" } } },
-  { $sort: { qte_totale: -1 } }
-]);
-
-// PARTIE 2 — INDEX ET EXPLAIN()
-
-db.commandes.find({ statut: "livree" }).explain("executionStats");
-
-db.commandes.createIndex({ statut: 1, date: -1 });
-
-db.commandes.find({ statut: "livree" }).explain("executionStats");
-
-db.clients.createIndex({ email: 1 }, { unique: true });
-
-// PARTIE 3 — DÉFI
-
-db.clients.aggregate([
-  { $lookup: { from: "commandes", localField: "_id", foreignField: "client_id", as: "cmds" } },
-  { $project: {
-    segment: 1,
-    nbCmds: { $size: "$cmds" },
-    ca: { $reduce: { input: "$cmds", initialValue: 0, in: { $add: ["$$value", "$$this.montant_total"] } } }
-  }},
-  { $group: {
-    _id: "$segment",
-    nbClients: { $sum: 1 },
-    caTotal: { $sum: "$ca" },
-    moyenneCmds: { $avg: "$nbCmds" }
-  }}
-]);
+print("Seeding terminé avec succès pour MongoDB !");

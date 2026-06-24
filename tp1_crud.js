@@ -1,7 +1,18 @@
 use boutique;
 
+// --- INITIALISATION DU JEU DE DONNÉES (MOCK DATA) ---
+db.produits.drop();
+db.produits.insertMany([
+  { "sku": "PRD-001", "nom": "Casque Bluetooth", "categorie": "audio", "prix": 79.99, "stock": 120, "tags": ["sans-fil", "bluetooth"], "fournisseur": { "nom": "TechCorp", "pays": "FR" } },
+  { "sku": "PRD-002", "nom": "Barre de son", "categorie": "audio", "prix": 59.99, "stock": 45, "tags": ["promo", "filaire"], "fournisseur": { "nom": "SoundPro", "pays": "FR" } },
+  { "sku": "PRD-003", "nom": "Casque premium", "categorie": "audio", "prix": 149.99, "stock": 0, "tags": ["sans-fil"], "fournisseur": { "nom": "AudioMax", "pays": "DE" } },
+  { "sku": "PRD-004", "nom": "Enceinte Bluetooth", "categorie": "audio", "prix": 45.00, "stock": 80, "tags": ["promo", "sans-fil"], "fournisseur": { "nom": "SoundPro", "pays": "FR" } },
+  { "sku": "PRD-005", "nom": "Ecouteurs filaires", "categorie": "audio", "prix": 15.00, "stock": 150, "tags": ["budget"], "fournisseur": { "nom": "LogiCorp", "pays": "FR" } }
+]);
+
 // PARTIE 1 — CRUD
 
+// 1. Insertion de 3 produits informatique (Create)
 db.produits.insertMany([
   { sku: "PRD-101", nom: "Souris sans fil", categorie: "informatique", prix: 25.99, stock: 50, fournisseur: { nom: "LogiCorp", pays: "FR" } },
   { sku: "PRD-102", nom: "Clavier mecanique", categorie: "informatique", prix: 85.00, stock: 30, fournisseur: { nom: "KeyMaster", pays: "DE" } },

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapport TP4 : Neo4j & Langage Cypher</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --secondary: #10b981;
+      --bg-dark: #0f172a;
+      --text-main: #334155;
+      --text-heading: #1e293b;
+      --border-color: #e2e8f0;
+      --code-bg: #f8fafc;
+      --code-text: #0f172a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--text-main);
+      background-color: #ffffff;
+      line-height: 1.6;
+      padding: 40px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    /* Print styles */
+    @media print {
+      body {
+        padding: 0;
+        max-width: 100%;
+      }
+      .page-break {
+        page-break-before: always;
+      }
+      .no-print {
+        display: none;
+      }
+    }
+
+    header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 20px;
+      margin-bottom: 40px;
+    }
+
+    .tp-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 10px;
+    }
+
+    .tp-subtitle {
+      font-size: 1.2rem;
+      font-weight: 500;
+      color: #64748b;
+      margin-bottom: 15px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      font-size: 0.95rem;
+      color: #475569;
+      background: var(--code-bg);
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .meta-item strong {
+      color: var(--text-heading);
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: var(--primary-dark);
+      margin-top: 35px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 5px;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      color: var(--text-heading);
+      margin-top: 25px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin-bottom: 15px;
+      text-align: justify;
+    }
+
+    /* Code styling */
+    pre {
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+      border-left: 4px solid var(--primary);
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 15px 0;
+    }
+
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: var(--code-text);
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 12px 15px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f1f5f9;
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    tr:nth-child(even) td {
+      background-color: #f8fafc;
+    }
+
+    .result-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-family: 'Fira Code', monospace;
+    }
+
+    /* Graph schema visual */
+    .schema-container {
+      display: flex;
+      justify-content: center;
+      margin: 25px 0;
+      background: #fafafa;
+      padding: 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+    }
+
+    .schema-svg {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="tp-title">Rapport de TP4 : Neo4j & Langage Cypher</div>
+    <div class="tp-subtitle">Bases de données non relationnelles — SGBD NoSQL orientés Graphes</div>
+    <div class="meta-grid">
+      <div class="meta-item"><strong>Étudiant :</strong> Makhtar</div>
+      <div class="meta-item"><strong>Année Académique :</strong> 2025 - 2026</div>
+      <div class="meta-item"><strong>Sujet :</strong> Réseau Social & Recommandation</div>
+      <div class="meta-item"><strong>Technologie :</strong> Neo4j (v5) via Docker</div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Introduction</h2>
+    <p>
+      Ce travail pratique est consacré à la modélisation et à l'interrogation de bases de données de graphes à l'aide de Neo4j et de son langage de requête déclaratif, Cypher. L'objectif est de mettre en œuvre un mini réseau social connectant des personnes caractérisées par des relations de suivi réciproques ou unilatérales, ainsi que par leurs centres d'intérêt.
+    </p>
+  </section>
+
+  <section class="page-break">
+    <h2>Partie 1 — Modélisation et Chargement du Graphe</h2>
+    <p>
+      Le graphe est constitué de deux types de nœuds principaux :
+    </p>
+    <ul>
+      <li><strong>Personne</strong> : caractérisé par les propriétés <code>nom</code> (clé unique), <code>age</code>, et <code>ville</code>.</li>
+      <li><strong>Interet</strong> : caractérisé par le nom du centre d'intérêt (Sport, Musique, Tech, Voyage).</li>
+    </ul>
+    <p>
+      Les interactions entre ces entités sont modélisées par les relations typées suivantes :
+    </p>
+    <ul>
+      <li><code>(:Personne)-[:SUIT]->(:Personne)</code> (réseau orienté représenté par des abonnements).</li>
+      <li><code>(:Personne)-[:AIME]->(:Interet)</code> (appartenance ou goût pour un centre d'intérêt).</li>
+    </ul>
+
+    <div class="schema-container">
+      <svg class="schema-svg" viewBox="0 0 500 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Define marker for arrows -->
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+          </marker>
+          <marker id="arrow-blue" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#4f46e5"/>
+          </marker>
+        </defs>
+        
+        <!-- Personne Node 1 -->
+        <circle cx="100" cy="100" r="30" fill="url(#blueGrad)" stroke="#4f46e5" stroke-width="2"/>
+        <text x="100" y="105" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="10" fill="#ffffff">:Personne</text>
+        
+        <!-- Personne Node 2 -->
+        <circle cx="280" cy="100" r="30" fill="url(#blueGrad)" stroke="#4f46e5" stroke-width="2"/>
+        <text x="280" y="105" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="10" fill="#ffffff">:Personne</text>
+
+        <!-- Interet Node -->
+        <rect x="390" y="70" width="80" height="60" rx="10" fill="url(#greenGrad)" stroke="#10b981" stroke-width="2"/>
+        <text x="430" y="105" text-anchor="middle" font-family="'Inter', sans-serif" font-weight="600" font-size="10" fill="#ffffff">:Interet</text>
+
+        <!-- SUIT Relation -->
+        <path d="M 130 100 L 250 100" fill="none" stroke="#4f46e5" stroke-width="2" marker-end="url(#arrow-blue)"/>
+        <text x="190" y="90" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#4f46e5" font-weight="500">SUIT</text>
+
+        <!-- AIME Relation -->
+        <path d="M 310 100 L 390 100" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4" marker-end="url(#arrow)"/>
+        <text x="350" y="90" text-anchor="middle" font-family="'Inter', sans-serif" font-size="9" fill="#10b981" font-weight="500">AIME</text>
+
+        <!-- Gradients -->
+        <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#818cf8"/>
+          <stop offset="100%" stop-color="#4f46e5"/>
+        </linearGradient>
+        <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="100%" stop-color="#10b981"/>
+        </linearGradient>
+      </svg>
+    </div>
+
+    <h3>Script de chargement et d'initialisation</h3>
+    <pre><code>// Nettoyage complet
+MATCH (n) DETACH DELETE n;
+
+// Création des centres d'intérêt
+CREATE (:Interet {nom: "Sport"});
+CREATE (:Interet {nom: "Musique"});
+CREATE (:Interet {nom: "Tech"});
+CREATE (:Interet {nom: "Voyage"});
+
+// Création des 8 personnes
+CREATE (:Personne {nom: "Alice",   age: 28, ville: "Paris"});
+CREATE (:Personne {nom: "Bob",     age: 32, ville: "Lyon"});
+CREATE (:Personne {nom: "Charlie", age: 25, ville: "Paris"});
+CREATE (:Personne {nom: "Diana",   age: 29, ville: "Marseille"});
+CREATE (:Personne {nom: "Eve",     age: 35, ville: "Lille"});
+CREATE (:Personne {nom: "Franck",  age: 40, ville: "Lyon"});
+CREATE (:Personne {nom: "Grace",   age: 22, ville: "Paris"});
+CREATE (:Personne {nom: "Hugo",    age: 31, ville: "Bordeaux"});
+
+// Liens de suivi (relations SUIT)
+MATCH (alice:Personne {nom:"Alice"}),(bob:Personne {nom:"Bob"}),(charlie:Personne {nom:"Charlie"}),(diana:Personne {nom:"Diana"}),(eve:Personne {nom:"Eve"}),(franck:Personne {nom:"Franck"}),(grace:Personne {nom:"Grace"}),(hugo:Personne {nom:"Hugo"})
+CREATE (alice)-[:SUIT]->(bob),(alice)-[:SUIT]->(charlie),(alice)-[:SUIT]->(diana),(bob)-[:SUIT]->(alice),(bob)-[:SUIT]->(eve),(charlie)-[:SUIT]->(diana),(charlie)-[:SUIT]->(franck),(diana)-[:SUIT]->(eve),(eve)-[:SUIT]->(franck),(eve)-[:SUIT]->(grace),(franck)-[:SUIT]->(hugo),(franck)-[:SUIT]->(bob),(grace)-[:SUIT]->(alice),(hugo)-[:SUIT]->(charlie);
+
+// Liens d'intérêt (relations AIME)
+MATCH (alice:Personne {nom:"Alice"}),(bob:Personne {nom:"Bob"}),(charlie:Personne {nom:"Charlie"}),(diana:Personne {nom:"Diana"}),(eve:Personne {nom:"Eve"}),(franck:Personne {nom:"Franck"}),(grace:Personne {nom:"Grace"}),(hugo:Personne {nom:"Hugo"}),(sport:Interet {nom:"Sport"}),(musique:Interet {nom:"Musique"}),(tech:Interet {nom:"Tech"}),(voyage:Interet {nom:"Voyage"})
+CREATE (alice)-[:AIME]->(tech),(alice)-[:AIME]->(voyage),(bob)-[:AIME]->(sport),(charlie)-[:AIME]->(musique),(charlie)-[:AIME]->(tech),(diana)-[:AIME]->(voyage),(eve)-[:AIME]->(sport),(franck)-[:AIME]->(musique),(grace)-[:AIME]->(tech),(hugo)-[:AIME]->(voyage);</code></pre>
+  </section>
+
+  <section class="page-break">
+    <h2>Partie 2 — Requêtes Cypher et Analyses</h2>
+    <p>
+      Voici les requêtes exécutées sur notre jeu de données ainsi que les résultats retournés :
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 5%;">N°</th>
+          <th style="width: 35%;">Objectif & Requête Cypher</th>
+          <th style="width: 40%;">Explication technique</th>
+          <th style="width: 20%;">Résultats observés</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>Lister les personnes de Paris</strong><br>
+            <pre><code>MATCH (p:Personne {ville: "Paris"})
+RETURN p.nom;</code></pre>
+          </td>
+          <td>Filtre de propriété simple sur le label <code>:Personne</code>.</td>
+          <td>
+            <span class="result-badge">"Alice"</span><br>
+            <span class="result-badge">"Charlie"</span><br>
+            <span class="result-badge">"Grace"</span>
+          </td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>Suivis directs d'Alice</strong><br>
+            <pre><code>MATCH (a:Personne {nom: "Alice"})-[:SUIT]->(p)
+RETURN p.nom;</code></pre>
+          </td>
+          <td>Recherche des nœuds cibles d'une relation sortante <code>:SUIT</code> à partir d'un nœud de départ défini.</td>
+          <td>
+            <span class="result-badge">"Diana"</span><br>
+            <span class="result-badge">"Charlie"</span><br>
+            <span class="result-badge">"Bob"</span>
+          </td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><strong>Amis d'amis d'Alice (2 sauts)</strong><br>
+            <pre><code>MATCH (a:Personne {nom: "Alice"})-[:SUIT]->()-[:SUIT]->(p)
+WHERE p.nom <> "Alice"
+RETURN DISTINCT p.nom;</code></pre>
+          </td>
+          <td>Traversée à 2 niveaux. Le filtre exclut le retour à l'origine (Alice).</td>
+          <td>
+            <span class="result-badge">"Eve"</span><br>
+            <span class="result-badge">"Franck"</span><br>
+            <span class="result-badge">"Diana"</span>
+          </td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><strong>Intérêts communs avec Alice</strong><br>
+            <pre><code>MATCH (a:Personne {nom: "Alice"})-[:AIME]->(i)<-[:AIME]-(p)
+RETURN DISTINCT p.nom, i.nom AS interet;</code></pre>
+          </td>
+          <td>Recherche de motifs partagés (V-shape) entre deux personnes partageant le même nœud d'intérêt.</td>
+          <td>
+            <span class="result-badge">"Hugo", "Voyage"</span><br>
+            <span class="result-badge">"Diana", "Voyage"</span><br>
+            <span class="result-badge">"Grace", "Tech"</span><br>
+            <span class="result-badge">"Charlie", "Tech"</span>
+          </td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><strong>Top 3 des plus suivis</strong><br>
+            <pre><code>MATCH (p:Personne)<-[:SUIT]-()
+RETURN p.nom, count(*) AS suiveurs
+ORDER BY suiveurs DESC LIMIT 3;</code></pre>
+          </td>
+          <td>Agrégation par comptage des relations de suivi entrantes, tri décroissant et restriction de résultat.</td>
+          <td>
+            <span class="result-badge">"Bob", 2</span><br>
+            <span class="result-badge">"Charlie", 2</span><br>
+            <span class="result-badge">"Alice", 2</span>
+          </td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><strong>Plus court chemin Alice ➔ Eve</strong><br>
+            <pre><code>MATCH path = shortestPath(
+  (a:Personne {nom:"Alice"})-[:SUIT*..10]-(e:Personne {nom:"Eve"})
+)
+RETURN path;</code></pre>
+          </td>
+          <td>Utilisation de la fonction intégrée <code>shortestPath</code> pour trouver le chemin minimal en mode non orienté (jusqu'à 10 sauts maximum).</td>
+          <td>
+            <span class="result-badge">Alice ➔ Grace ➔ Eve</span><br>
+            <small>(Longueur : 2 relations)</small>
+          </td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td><strong>Suivis réciproques</strong><br>
+            <pre><code>MATCH (a:Personne)-[:SUIT]->(b:Personne)-[:SUIT]->(a)
+WHERE elementId(a) < elementId(b)
+RETURN a.nom, b.nom;</code></pre>
+          </td>
+          <td>Détection de relations réciproques. Le filtre <code>elementId</code> évite d'afficher le doublon inversé (B, A).</td>
+          <td>
+            <span class="result-badge">"Alice", "Bob"</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="page-break">
+    <h2>Partie 3 — Algorithme de Recommandation d'amis</h2>
+    <p>
+      Le moteur de recommandation cible les "amis d'amis" qu'Alice ne suit pas encore, triés par le nombre d'amis communs. 
+    </p>
+    
+    <h3>Requête de Recommandation</h3>
+    <pre><code>MATCH (alice:Personne {nom: "Alice"})-[:SUIT]->(ami)-[:SUIT]->(suggestion)
+WHERE NOT (alice)-[:SUIT]->(suggestion) AND alice <> suggestion
+RETURN DISTINCT suggestion.nom, count(ami) AS amis_communs
+ORDER BY amis_communs DESC
+LIMIT 5;</code></pre>
+
+    <h3>Résultats de la requête</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Rang</th>
+          <th>Profil recommandé</th>
+          <th>Nombre d'amis en commun</th>
+          <th>Identité des intermédiaires</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><strong>Eve</strong></td>
+          <td><span class="result-badge">2</span></td>
+          <td>Bob et Diana (suivis par Alice et qui suivent tous deux Eve)</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><strong>Franck</strong></td>
+          <td><span class="result-badge">1</span></td>
+          <td>Charlie (suivi par Alice et qui suit Franck)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Explication détaillée</h3>
+    <ol>
+      <li><strong>Exploration :</strong> La clause <code>(alice)-[:SUIT]->(ami)-[:SUIT]->(suggestion)</code> parcourt le graphe à deux degrés (amis des personnes suivies par Alice).</li>
+      <li><strong>Filtre négatif :</strong> <code>WHERE NOT (alice)-[:SUIT]->(suggestion)</code> garantit qu'Alice ne reçoit pas de suggestion pour des profils qu'elle suit déjà (comme Diana qui apparaissait initialement dans la Partie 2 Q3).</li>
+      <li><strong>Auto-exclusion :</strong> Le prédicat <code>alice <> suggestion</code> évite de recommander Alice à elle-même si ses amis la suivent en retour.</li>
+      <li><strong>Classement :</strong> L'agrégation <code>count(ami)</code> calcule le score de pertinence (nombre d'intermédiaires). Eve a un score de 2, la plaçant en tête des suggestions.</li>
+    </ol>
+  </section>
+
+  <section class="page-break">
+    <h2>Partie 4 — Réponses aux Questions de Réflexion</h2>
+    
+    <h3>1. Pourquoi ce type de requête (recommandation d'amis d'amis) est-il difficile en SQL pur ?</h3>
+    <p>
+      Dans un modèle de données relationnel classique (SQL), les relations "plusieurs-à-plusieurs" (comme le réseau de suivi) sont gérées à l'aide d'une table d'association (par exemple <code>suivis(id_suiveur, id_suivi)</code>).
+    </p>
+    <p>
+      Pour effectuer une recherche d'amis d'amis (2 sauts), nous devons faire une jointure de la table de suivi sur elle-même (un <em>self-join</em>). Si nous souhaitons chercher à 3, 4 ou 5 sauts, ou trouver le plus court chemin de longueur indéterminée, le nombre de jointures augmente à chaque étape. Chaque jointure force le SGBD relationnel à multiplier les tables sous forme de produits cartésiens intermédiaires et à scanner des index de clés primaires/étrangères. À grande échelle, le temps de calcul explose de façon exponentielle.
+    </p>
+    <p>
+      Neo4j élimine cette complexité grâce à l'approche <strong>"Index-free Adjacency"</strong> (Adjacence sans index). Chaque nœud possède en mémoire des adresses physiques directes pointant vers ses nœuds voisins. Parcourir une relation revient à suivre un pointeur mémoire, ce qui s'effectue en temps constant $O(1)$, indépendamment de la taille globale du graphe.
+    </p>
+
+    <h3>2. Quelle limite si le graphe contient 100 millions de nœuds ?</h3>
+    <p>
+      Avec 100 millions de nœuds et potentiellement plusieurs milliards de relations, les limitations et points de vigilance sont les suivants :
+    </p>
+    <ul>
+      <li>
+        <strong>La taille de la RAM (PageCache) :</strong> Pour maintenir ses performances de pointeur mémoire, Neo4j doit conserver la structure topologique active du graphe en mémoire vive. Si la taille de la RAM est insuffisante, le système effectue des lectures/écritures sur le disque (I/O), ce qui effondre les performances de traversée.
+      </li>
+      <li>
+        <strong>Le phénomène de Super-nœuds (Dense Nodes) :</strong> Certains profils (ex: comptes de célébrités) possèdent des millions de relations entrantes ou sortantes. Lorsqu'un algorithme de traversée passe par un tel nœud, le nombre de chemins à explorer explose instantanément, entraînant des latences critiques (CPU/mémoire saturés).
+      </li>
+      <li>
+        <strong>Explosion combinatoire :</strong> Les requêtes effectuant des parcours larges sans limite stricte de profondeur (comme <code>[:SUIT*]</code>) peuvent toucher une part colossale du graphe. Il est indispensable de contraindre les recherches de chemin (par ex. <code>[:SUIT*..3]</code>).
+      </li>
+      <li>
+        <strong>Adaptation de l'architecture :</strong> Pour de telles volumétries, les requêtes de recommandation en temps réel (OLTP) sont généralement complétées par du pré-calcul asynchrone (OLAP) via le module <strong>GDS (Graph Data Science)</strong> de Neo4j (ex: algorithmes de clustering, PageRank, ou calculs de similarité Cosine périodiques).
+      </li>
+    </ul>
+  </section>
+
+</body>
+</html>
